@@ -5,51 +5,14 @@ from nltk.tokenize import word_tokenize
 from nltk.chunk import conlltags2tree
 from nltk.tree import Tree
 #nltk.download()
-#from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
-#from nltk.stem import PorterStemmer
-#from nltk.corpus import state_union
-#from nltk.tokenize import PunktSentenceTokenizer
-
-#example_text = "Hello mr. Smith, how are you doing today? the weather is great, and python is awesome. the sky is pinkish-blue. you shouldn't eat cardboard."
-
-#print("Sentence Tokenize:",sent_tokenize(example_text))
-#print("\n \n")
-#print("Word Tokenize:",word_tokenize(example_text))
-
-
-#stop_words = set(stopwords.words('english'))
-
-#word_tokens = word_tokenize(example_text)
-
-#filtered_sentence = [w for w in word_tokens if not w in stop_words]
-
-#filtered_sentence = []
-
-#for w in word_tokens:
-#    if w not in stop_words:
-#        filtered_sentence.append(w)
-
-#print("\n \n")
-#print("After Stopwords removal:",filtered_sentence)
-
-
-#ps = PorterStemmer()
-#after_stem = []
-#for w in filtered_sentence:
-#	after_stem.append(ps.stem(w))
-
-#print("\n\nAfter Stemming:",after_stem)
-
 
 from nltk.tag import StanfordNERTagger
-from nltk.tokenize import word_tokenize
-
+from A_V import main_parser
 st = StanfordNERTagger('stanford-ner-2018-10-16/classifiers/english.muc.7class.distsim.crf.ser.gz',
 					   'stanford-ner-2018-10-16/stanford-ner.jar',
 					   encoding='utf-8')
-
-#text = "Pak vs SA 5th ODI Live Cricket Score Streaming Online: After being overpowered in the Test series, Pakistan have a golden opportunity to beat South Africa in their own backyard and win the 5-match ODI series. The final match of the series will be played on Wednesday. After enduring an unfortunate loss in the third ODI in Durban, Pakistan bounced back in the contest by securing an impressive 8-wicket win in the previous ODI. Usman Khan led the bowling unit, while Imam-ul-Haq struck a brilliant 71 as the visitors dominated their opponent in both the departments of the game. South Africa, on the other hand, would look to take the defeat as a wake up call. Apart from Hashim Amla and skipper Faf du Plessis, the entire South African batting line-up bowed down against the Pakistani seamers. Usman Khan, who scalped 4-wickets in the previous ODI was the key man behind South Africa’s collpase. The hosts lost the final six wickets for 24 runs in the previous ODI, with Khan picking three wickets in the 37th over of the match. IBM ACM ICPC 2018 Google 10 dollars."
 
 def date_classify(date):
 	d={}
@@ -75,134 +38,162 @@ def date_classify(date):
 				d["TIME"].append(i)
 				
 	return d	
-	
-fp = open("S-HT.txt","w+")
-for filenum in range(1001,1051):
+def convertHash(string):
+	s=""
+	for a in string:
+		s+=a
+	return hash(s)
+
+fp = open("S2-HT.txt","w+")
+for filenum in range(1001,1020):
 #	file_name = "sample.txt"
-	file_name = "news_files/ht/News"+str(filenum)+".txt"
-	fil = filenum+1000
+	file_name = "newscrap/article"+str(filenum)+".txt"
+	fil = filenum
 	fp.write(str(fil))
 	fp.write("\n")
 	
-	fileid = "FileID: "+ "News"+str(filenum)+".txt"
+	fileid = "	FileID: "+ "article"+str(filenum)+".txt"
 	fp.write(fileid)
 	fp.write("\n")
-	raw_text = open(file_name).read()
-	tokenized_text = word_tokenize(raw_text)
-	tokens = []
-	for val in tokenized_text:
-		if val.find(".") != -1:
-#			print(val)
-			a = val.split(".")
-			if len(a)==2:
-				if len(a[0]) > 2 and len(a[1]) > 2:
-					tokens.append(a[0])
-					tokens.append(a[1])
-		else:
-			tokens.append(val)
-	stop_words = set(stopwords.words('english'))
-	filtered_sentence = [w for w in tokens if not w in stop_words]
-	classified_text = st.tag(filtered_sentence)
-
-#	print(classified_text,"\n\n\n")
-	output={}
-	output["PERSON"]=[]
-	output["O"] = []
-	output["DATE"]=[]
-	output["ORGANIZATION"]=[]
-	output["LOCATION"]=[]
-
-	for word in classified_text:
-		if word[1] == "PERSON":
-			output["PERSON"].append(word[0])
-		elif word[1] == "O":
-			output["O"].append(word[0])
-		elif word[1] == "DATE":
-			output["DATE"].append(word[0])
-		elif word[1] == "ORGANIZATION":
-			output["ORGANIZATION"].append(word[0])
-		elif word[1] == "LOCATION":
-			output["LOCATION"].append(word[0])
-	output["O"]=list(filter(("(").__ne__, output["O"]))
-	output["O"]=list(filter((")").__ne__, output["O"]))
-	output["O"]=list(filter((".").__ne__, output["O"]))
-	output["O"]=list(filter((",").__ne__, output["O"]))
-	output["O"]=list(filter((";").__ne__, output["O"]))
-	output["O"]=list(filter((":").__ne__, output["O"]))
-	output["O"]=list(filter(("’").__ne__, output["O"]))
-	output["O"]=list(filter(("``").__ne__, output["O"]))
-	
-	output["DATE"] = date_classify(output["DATE"])
-	for key,value in output.items():
-		fp.write(key)
-		fp.write(" : ")
-		if key != "DATE":
-			fp.write(str(list(set(value))))
-		else:
-			fp.write(str(value))
-		fp.write("\n")
-		
-#		print(key,":",value)
+	img = "	Image: "+ str(filenum) +".jpg"
+	fp.write(img)
 	fp.write("\n")
+	raw_txt = open(file_name).read()
+	sent_tokenize_list = sent_tokenize(raw_txt)
+	if len(sent_tokenize_list) > 1:
+		for raw_text in sent_tokenize_list:
+			tokenized_text = word_tokenize(raw_text)
+			tokenized_text=[word for word in tokenized_text if word.isalpha()]
+			hash_sent = convertHash(tokenized_text)
+			main_parser(raw_text)
+			# print(raw_text)
+			if hash_sent != 0:
+				fp.write("	sid: ")
+				fp.write(str(hash_sent))
+				fp.write("\n")
+	#			fp.write("	Sentence: ")
+	#			fp.write(raw_text)
+	#			fp.write("\n")
+			#	tokens = []
+			#	for val in tokenized_text:
+			#		if val.find(".") != -1:
+			##			print(val)
+			#			a = val.split(".")
+			#			if len(a)==2:
+			#				if len(a[0]) > 2 and len(a[1]) > 2:
+			#					tokens.append(a[0])
+			#					tokens.append(a[1])
+			#		else:
+			#			tokens.append(val)
+				stop_words = set(stopwords.words('english'))
+				filtered_sentence = [w for w in tokenized_text if not w in stop_words]
+				classified_text = st.tag(filtered_sentence)
+			#	print(classified_text,"\n\n\n")
+				output={}
+				output["PERSON"]=[]
+				output["O"] = []
+				output["DATE"]=[]
+				output["ORGANIZATION"]=[]
+				output["LOCATION"]=[]
+				output["VERBS"]=[]
+		#		for word in classified_text:
+		#			if word[1] == "PERSON":
+		#				output["PERSON"].append(word[0])
+		#			if word[1] == "O":
+		#				output["O"].append(word[0])
+		#			elif word[1] == "DATE":
+		#				output["DATE"].append(word[0])
+		#			elif word[1] == "ORGANIZATION":
+		#				output["ORGANIZATION"].append(word[0])
+		#			elif word[1] == "LOCATION":
+		#				output["LOCATION"].append(word[0])
+			#	output["O"]=list(filter(("(").__ne__, output["O"]))
+				
+		#		output["DATE"] = date_classify(output["DATE"])
+				def bio_tagger(ne_tagged):
+						bio_tagged = []
+						prev_tag = "O"
+						for token, tag in ne_tagged:
+							if tag == "O": #O
+								bio_tagged.append((token, tag))
+								prev_tag = tag
+								continue
+							if tag != "O" and prev_tag == "O": # Begin NE
+								bio_tagged.append((token, "B-"+tag))
+								prev_tag = tag
+							elif prev_tag != "O" and prev_tag == tag: # Inside NE
+								bio_tagged.append((token, "I-"+tag))
+								prev_tag = tag
+							elif prev_tag != "O" and prev_tag != tag: # Adjacent NE
+								bio_tagged.append((token, "B-"+tag))
+								prev_tag = tag
+						return bio_tagged
+
+				def stanford_tree(bio_tagged):
+					tokens, ne_tags = zip(*bio_tagged)
+					pos_tags = [pos for token, pos in pos_tag(tokens)]
+
+					conlltags = [(token, pos, ne) for token, pos, ne in zip(tokens, pos_tags, ne_tags)]
+					ne_tree = conlltags2tree(conlltags)
+					return ne_tree
+
+				def structure_ne(ne_tree):
+					ne = []
+					neo = []
+					for subtree in ne_tree:
+						if type(subtree) == Tree: # If subtree is a noun chunk, i.e. NE != "O"
+							ne_label = subtree.label()
+							ne_string = " ".join([token for token, pos in subtree.leaves()])
+							ne.append((ne_string, ne_label))
+						else:
+							neo.append((subtree[0], "O"))
+							if subtree[1] in ["VBD","VBG","VBN","VBP","VBZ"]:
+								output["VERBS"].append(subtree[0])
+					return [ne,neo]
+				def attribute_verb(ne_tree):
+					ne = []
+					neo = []
+					for subtree in ne_tree:
+						if type(subtree) == Tree: # If subtree is a noun chunk, i.e. NE != "O"
+							ne_label = subtree.label()
+							ne_string = " ".join([token for token, pos in subtree.leaves()])
+							ne.append((ne_string, ne_label))
+						else:
+							neo.append((subtree[0], "O"))
+							if subtree[1] in ["VBD","VBG","VBN","VBP","VBZ"]:
+								output["VERBS"].append(subtree[0])
+				def stanford_main():
+					txt_file=file_name
+					tree_stanford = stanford_tree(bio_tagger(classified_text))
+					# print(tree_stanford)
+					return structure_ne(tree_stanford)
+					
+				phrase_text,others = stanford_main()
+				
+			
+
+				for word_p in phrase_text:
+					if word_p[1] == 'PERSON':
+						output['PERSON'].append(word_p[0])
+					if word_p[1] == 'ORGANIZATION':
+						output["ORGANIZATION"].append(word_p[0])
+					elif word_p[1] == 'LOCATION':
+						output['LOCATION'].append(word_p[0])
+					elif word_p[1] == "DATE":
+						output["DATE"].append(word_p[0])
+					elif word_p[1] == "LOCATION":
+						output["LOCATION"].append(word_p[0])
+						
+				output["DATE"] = str(date_classify(output["DATE"]))
+				for word_p in others:
+					if word_p[1] == 'O':
+						output['O'].append(word_p[0])	
+				for key, value in output.items():
+					fp.write("	")
+					fp.write(key)
+					fp.write(" : ")
+					fp.write(str(value))
+					fp.write("\n")
+				fp.write("\n")
 fp.close()
-
-
-	#------------------------------------------------------------------------------------------
-#	print("\n\n\n----------------------------------------\n\n\n\n")
-#	def process_text(txt_file):
-#		raw_text = open(txt_file).read()
-#		token_text = word_tokenize(raw_text)
-#		return token_text
-
-#	# Stanford NER tagger    
-#	def stanford_tagger(token_text):
-#		st = StanfordNERTagger('stanford-ner-2018-10-16/classifiers/english.all.3class.distsim.crf.ser.gz',
-#								'stanford-ner-2018-10-16/stanford-ner.jar',
-#								encoding='utf-8')   
-#		ne_tagged = st.tag(token_text)
-#		return(ne_tagged)
-#	def bio_tagger(ne_tagged):
-#			bio_tagged = []
-#			prev_tag = "O"
-#			for token, tag in ne_tagged:
-#				if tag == "O": #O
-#					bio_tagged.append((token, tag))
-#					prev_tag = tag
-#					continue
-#				if tag != "O" and prev_tag == "O": # Begin NE
-#					bio_tagged.append((token, "B-"+tag))
-#					prev_tag = tag
-#				elif prev_tag != "O" and prev_tag == tag: # Inside NE
-#					bio_tagged.append((token, "I-"+tag))
-#					prev_tag = tag
-#				elif prev_tag != "O" and prev_tag != tag: # Adjacent NE
-#					bio_tagged.append((token, "B-"+tag))
-#					prev_tag = tag
-#			return bio_tagged
-
-#	def stanford_tree(bio_tagged):
-#		tokens, ne_tags = zip(*bio_tagged)
-#		pos_tags = [pos for token, pos in pos_tag(tokens)]
-
-#		conlltags = [(token, pos, ne) for token, pos, ne in zip(tokens, pos_tags, ne_tags)]
-#		ne_tree = conlltags2tree(conlltags)
-#		return ne_tree
-
-#	def structure_ne(ne_tree):
-#		ne = []
-#		for subtree in ne_tree:
-#			if type(subtree) == Tree: # If subtree is a noun chunk, i.e. NE != "O"
-#				ne_label = subtree.label()
-#				ne_string = " ".join([token for token, pos in subtree.leaves()])
-#				ne.append((ne_string, ne_label))
-#		return ne
-
-
-
-#	def stanford_main():
-#		txt_file=file_name
-#		print(structure_ne(stanford_tree(bio_tagger(stanford_tagger(process_text(txt_file))))))
-		
-#	stanford_main()
-
 
