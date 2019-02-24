@@ -10,6 +10,7 @@ from nltk.corpus import stopwords
 
 from nltk.tag import StanfordNERTagger
 from A_V import main_parser
+import json
 st = StanfordNERTagger('stanford-ner-2018-10-16/classifiers/english.muc.7class.distsim.crf.ser.gz',
 					   'stanford-ner-2018-10-16/stanford-ner.jar',
 					   encoding='utf-8')
@@ -44,33 +45,39 @@ def convertHash(string):
 		s+=a
 	return hash(s)
 
-fp = open("S2-HT.txt","w+")
-for filenum in range(1001,1020):
+fp = open("S2-HT50.json","a+")
+ddd=[]
+for filenum in range(1001,1050):
 #	file_name = "sample.txt"
+	dic = {}
+	
 	file_name = "newscrap/article"+str(filenum)+".txt"
 	fil = filenum
-	fp.write(str(fil))
-	fp.write("\n")
+	dic["fileName"] = file_name
+#	fp.write(str(fil))
+#	fp.write("\n")
 	
 	fileid = "	FileID: "+ "article"+str(filenum)+".txt"
-	fp.write(fileid)
-	fp.write("\n")
-	img = "	Image: "+ str(filenum) +".jpg"
-	fp.write(img)
-	fp.write("\n")
+#	fp.write(fileid)
+#	fp.write("\n")
+	img = "newscrap/Image: "+ str(filenum) +".jpg"
+#	fp.write(img)
+#	fp.write("\n")
+	dic["Image"] = img
 	raw_txt = open(file_name).read()
 	sent_tokenize_list = sent_tokenize(raw_txt)
+	sent = []
 	if len(sent_tokenize_list) > 1:
 		for raw_text in sent_tokenize_list:
 			tokenized_text = word_tokenize(raw_text)
-			tokenized_text=[word for word in tokenized_text if word.isalpha()]
-			hash_sent = convertHash(tokenized_text)
-			main_parser(raw_text)
+#			tokenized_text=[word for word in tokenized_text if word.isalpha()]
+#			hash_sent = convertHash(tokenized_text)
+#			main_parser(raw_text)
 			# print(raw_text)
-			if hash_sent != 0:
-				fp.write("	sid: ")
-				fp.write(str(hash_sent))
-				fp.write("\n")
+			if len(tokenized_text) > 2:
+#				fp.write("\"sentence\":")
+#				fp.write(raw_text)
+#				fp.write("\n")
 	#			fp.write("	Sentence: ")
 	#			fp.write(raw_text)
 	#			fp.write("\n")
@@ -86,10 +93,12 @@ for filenum in range(1001,1020):
 			#		else:
 			#			tokens.append(val)
 				stop_words = set(stopwords.words('english'))
-				filtered_sentence = [w for w in tokenized_text if not w in stop_words]
+#				filtered_sentence = [w for w in tokenized_text if not w in stop_words]
+				filtered_sentence = tokenized_text
 				classified_text = st.tag(filtered_sentence)
 			#	print(classified_text,"\n\n\n")
 				output={}
+				output["SENTENCE"] = raw_text
 				output["PERSON"]=[]
 				output["O"] = []
 				output["DATE"]=[]
@@ -184,16 +193,33 @@ for filenum in range(1001,1020):
 					elif word_p[1] == "LOCATION":
 						output["LOCATION"].append(word_p[0])
 						
-				output["DATE"] = str(date_classify(output["DATE"]))
+#				output["DATE"] = list(set(date_classify(output["DATE"])))
+#				output["PERSON"] = list(set(output["PERSON"]))
+#				output["ORGANIZATION"] = list(set(output["ORGANIZATION"]))
+#				output["LOCATION"] = list(set(output["LOCATION"]))
+				
 				for word_p in others:
-					if word_p[1] == 'O':
+					if word_p[1] == 'O' and word_p[0].isalpha() and not word_p[0] in stop_words:
 						output['O'].append(word_p[0])	
-				for key, value in output.items():
-					fp.write("	")
-					fp.write(key)
-					fp.write(" : ")
-					fp.write(str(value))
-					fp.write("\n")
-				fp.write("\n")
+#				output["O"] = list(set(output["O"]))
+#				for key,value in output.items():
+#					if len(value) == 0:
+#						output[key] = {}
+				
+				sent.append(output)
+#				print(output)
+	dic["sentences"] = sent
+	ddd.append(dic)
+#	print(dic)
+fp.write(json.dumps(ddd))
+#				for key, value in output.items():
+#					fp.write("	")
+#					fp.write("\"")
+#					fp.write(key)
+#					fp.write("\"")
+#					fp.write(": ")
+#					fp.write(str(value))
+#					fp.write("\n")
+#				fp.write("\n")
 fp.close()
 
